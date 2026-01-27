@@ -4,6 +4,8 @@ const app = express()
 const { userAuth } = require('./middlewares/auth');
 const { connectDB } = require('./config/database');
 const user = require('./models/user');
+const { validateSignUp } = require('./utils/validations');
+const bcrypt = require('bcrypt');
 
 
 app.use(express.json());
@@ -16,11 +18,16 @@ connectDB().then(() => {
 
 // post api making 
 app.post('/signUp', async (req, res) => {
-    const newUser = new user(req.body);
     try {
-        const password = req.body.password;
+        validateSignUp(req);
+        const {first_name,last_name,email,password} = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
-        newUser.password = hashedPassword;
+         const newUser = new user({
+            first_name,
+            last_name,
+            email,
+            password: hashedPassword
+        });
         await newUser.save();
 
         res.status(201).send({ message: "User registered successfully" })
@@ -28,7 +35,7 @@ app.post('/signUp', async (req, res) => {
         if (err.code === 11000) {
             res.status(400).send({ error: "Email already exists" });
         } else {
-            res.status(500).send({ error: "Error in signup" });
+            res.status(500).send({ error: err.message });
         }
     }
 })
@@ -95,6 +102,25 @@ app.patch('/profile/:userID', async (req, res) => {
         }
     } catch (err) {
         console.log("error in updating profile data", err)
+    }
+})
+
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const existingUser = await user.findOne({ email });
+        if (!existingUser) {
+            return res.status(400).send({ error: "Invalid email or password" });
+        } else {
+            const isPasswordMatch = await bcrypt.compare(password, existingUser.password);
+            if (!isPasswordMatch) {
+                return res.status(400).send({ error: "Invalid email or password" });
+            }
+            res.send({ message: "Login successful" });
+        }
+    }
+    catch (err) {
+        console.log("error in login", err)
     }
 })
 
