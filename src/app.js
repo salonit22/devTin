@@ -1,14 +1,18 @@
 const express = require('express');
 
 const app = express()
-const { userAuth } = require('./middlewares/auth');
 const { connectDB } = require('./config/database');
 const user = require('./models/user');
 const { validateSignUp } = require('./utils/validations');
 const bcrypt = require('bcrypt');
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
+const {userAuth } = require('./middlewares/auth');
+
 
 
 app.use(express.json());
+app.use(cookieParser());
 
 connectDB().then(() => {
     console.log("database connected successfully")
@@ -20,9 +24,9 @@ connectDB().then(() => {
 app.post('/signUp', async (req, res) => {
     try {
         validateSignUp(req);
-        const {first_name,last_name,email,password} = req.body;
+        const { first_name, last_name, email, password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 10);
-         const newUser = new user({
+        const newUser = new user({
             first_name,
             last_name,
             email,
@@ -107,20 +111,33 @@ app.patch('/profile/:userID', async (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
+    
     try {
-        const existingUser = await user.findOne({ email });
-        if (!existingUser) {
-            return res.status(400).send({ error: "Invalid email or password" });
+        const isexistingUser = await user.findOne({ email })
+        if (!isexistingUser) {
+            console.log("user doesnt exist")
+            res.status(400).send('user doesnt exist')
         } else {
-            const isPasswordMatch = await bcrypt.compare(password, existingUser.password);
+            const token = await isexistingUser.getJWTToken();
+            res.cookie("jwtToken", token)
+
+            const isPasswordMatch = await isexistingUser.passwordCheck(password);
             if (!isPasswordMatch) {
-                return res.status(400).send({ error: "Invalid email or password" });
+                res.status(400).send('invalid password')
             }
-            res.send({ message: "Login successful" });
+            res.send({ message: "Login successful"});
         }
+    } catch (err) {
+        res.status(400).send(err)
     }
-    catch (err) {
-        console.log("error in login", err)
+})
+
+app.get('/info', userAuth,async (req, res) => {
+    const token = req.cookies?.jwtToken;
+    try {
+        res.send(req.user);
+    } catch (err) {
+        res.status(401).send('Unauthorized', err);
     }
 })
 
