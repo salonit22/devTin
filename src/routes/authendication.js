@@ -34,7 +34,7 @@ authRoute.post('/signUp', async (req, res) => {
 
 authRoute.post('/login', async (req, res) => {
     const { email, password } = req.body;
-
+      res.send('Login route working');
     try {
         const isexistingUser = await user.findOne({ email })
         if (!isexistingUser) {
