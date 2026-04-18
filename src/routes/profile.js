@@ -18,6 +18,7 @@ profileRouter.get('/info', userAuth,async (req, res) => {
 // get api making get profile by findOne
 profileRouter.get('/profile', async (req, res) => {
     const name = req.body.first_name;
+    console.log("name", name)
     try {
         const data = await user.findOne({ 'first_name': name })
         console.log(data)
@@ -43,10 +44,10 @@ profileRouter.get('/getAllProfile', async (req, res) => {
 })
 
 // edit profile api using patch method
-profileRouter.patch('/profile/edit', userAuth, async (req, res) => {
-
+profileRouter.put('/edit', userAuth, async (req, res) => {
     try {
         if (!validateProfileUpdates(req)) {
+            console.log("Invalid update fields", Object.keys(req.body));
             return res.status(400).send({ error: "Invalid update fields" });
         }
        const loggedInUserId = req.user;
@@ -54,7 +55,7 @@ profileRouter.patch('/profile/edit', userAuth, async (req, res) => {
             loggedInUserId[key] = req.body[key];
         });
         await loggedInUserId.save();
-        res.send(`Profile updated successfully for user: ${loggedInUserId.first_name}`);
+        res.send(loggedInUserId);
        
     } catch (err) {
          if (err.name === 'ValidationError') {
@@ -65,7 +66,7 @@ profileRouter.patch('/profile/edit', userAuth, async (req, res) => {
         errors
       });
     }
-
+    console.log("error in updating profile data", err);
     res.status(500).send({
       success: false,
       message: 'Something went wrong'

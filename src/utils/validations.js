@@ -13,7 +13,7 @@ const validateSignUp = (req) => {
 }
 
 const validateProfileUpdates = (req) => {
-    const allowedUpdates = ['first_name', 'last_name', 'age', 'about', 'skills', 'gender'];
+    const allowedUpdates = ['first_name', 'last_name', 'age', 'about', 'skills', 'gender', 'photoUrl'];
     const isAllowedUpdate = Object.keys(req.body).every((key) => allowedUpdates.includes(key)); 
     return isAllowedUpdate;
 }

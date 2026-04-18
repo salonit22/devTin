@@ -19,9 +19,9 @@ authRoute.post('/signUp', async (req, res) => {
             password: hashedPassword
         });
         await newUser.save();
-        console.log("New user created:", newUser);
-
-        res.status(201).send({ message: "User registered successfully" })
+        const token = await newUser.getJWTToken();
+        res.cookie("jwtToken", token)
+        res.send(newUser);
     } catch (err) {
         if (err.code === 11000) {
             res.status(400).send({ error: "Email already exists" });
@@ -34,7 +34,7 @@ authRoute.post('/signUp', async (req, res) => {
 
 authRoute.post('/login', async (req, res) => {
     const { email, password } = req.body;
-    
+
     try {
         const isexistingUser = await user.findOne({ email })
         if (!isexistingUser) {
@@ -48,7 +48,7 @@ authRoute.post('/login', async (req, res) => {
             if (!isPasswordMatch) {
                 res.status(400).send('invalid password')
             }
-            res.send({ message: "Login successful"});
+            res.send(isexistingUser);
         }
     } catch (err) {
         res.status(400).send(err)

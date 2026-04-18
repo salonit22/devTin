@@ -11,7 +11,7 @@ userRouter.get('/users/request/recevied',userAuth, async(req, res) =>{
         const connectionList = await connectionRequest.find({ 
             toUserID : loggedInUser._id,
             status: "interested"
-        }).populate('fromUserID',['first_name','last_name','photoUrl'])
+        }).populate('fromUserID',['first_name','last_name','photoUrl','age','gender','skills','about'])
 
 
         if(connectionList.length <= 0){
@@ -37,7 +37,7 @@ userRouter.get('/user/connections' , userAuth, async(req,res) =>{
                 {toUserID : loggedInUser._id, status: 'accecpted'},
                 {fromUserID : loggedInUser._id, status: 'accecpted'}
             ]
-        }).populate('fromUserID',['first_name','last_name','photoUrl']).populate('toUserID',['first_name','last_name','photoUrl'])
+        }).populate('fromUserID',['first_name','last_name','photoUrl','age','gender','skills']).populate('toUserID',['first_name','last_name','photoUrl','age','gender','skills'])
 
         const connection = connections.map(x =>{
             if(loggedInUser._id.toString() == x.fromUserID._id.toString()){
